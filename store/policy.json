@@ -1,0 +1,41 @@
+{
+ "app": "Keyfob",
+ "org": "SocialSure Private Limited",
+ "site": "https://shayanmohd.github.io/keyfob/",
+ "email": "shayanm2002@gmail.com",
+ "bg": "#F5F3ED",
+ "fg": "#16211B",
+ "muted": "#3D4C44",
+ "hair": "#D2CEC1",
+ "accent": "#7A5713",
+ "bgDark": "#12160F",
+ "fgDark": "#E9E7DA",
+ "mutedDark": "#A6A798",
+ "hairDark": "#2C302A",
+ "accentDark": "#D8B25F",
+ "fontFamily": "\"Public Sans\", system-ui, -apple-system, sans-serif",
+ "permissions": [
+  [
+   "VIBRATE",
+   "a short tap when a card is built or a drill step is completed"
+  ]
+ ],
+ "network": false,
+ "collects": [],
+ "storage": "Your plan, your guardians' names and the letter you write are stored in this app's private storage on this device. Your recovery phrase is never stored: it is held in memory only while cards are being built, and it is gone the moment you leave that screen.",
+ "extra": [
+  [
+   "It is not a wallet",
+   "Keyfob never sees a blockchain address, a balance or a transaction, and it cannot move anything. It has no network permission, so it could not reach a chain even if it wanted to. It splits a phrase you already hold into guardian cards, and it writes down the plan for using them."
+  ],
+  [
+   "Your phrase",
+   "The phrase you type is turned into cards on the device and then discarded. Nothing about it is written to storage, to a log, or to any file the app produces. The cards themselves are yours to print or copy out; the app does not keep them either."
+  ],
+  [
+   "Guardians",
+   "You will type the names of people you trust. Those names live on your device only. Tell them they are guardians, because a plan they have never heard of is not a plan."
+  ]
+ ],
+ "fontCss": "fonts/fonts.css"
+}

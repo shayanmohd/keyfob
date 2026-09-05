@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Keyfob</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<main id="stage">
+
+  <!-- ONBOARDING -->
+  <section class="screen" id="onboard" hidden>
+    <div class="ob-track" id="obTrack"></div>
+    <div class="ob-foot">
+      <div class="ob-dots" id="obDots"></div>
+      <button class="btn" id="obNext" type="button">Next</button>
+    </div>
+  </section>
+
+  <!-- PLAN -->
+  <section class="screen view" id="v-plan" hidden>
+    <header class="bar">
+      <div class="bar-mid"><p class="bar-title">Your plan</p><p class="bar-sub" id="planSub"></p></div>
+    </header>
+    <div class="scroller" id="planBody"></div>
+  </section>
+
+  <!-- CIRCLE -->
+  <section class="screen view" id="v-circle" hidden>
+    <header class="bar">
+      <div class="bar-mid"><p class="bar-title">The circle</p><p class="bar-sub" id="circleSub"></p></div>
+    </header>
+    <div class="scroller" id="circleBody"></div>
+  </section>
+
+  <!-- DRILL -->
+  <section class="screen view" id="v-drill" hidden>
+    <header class="bar">
+      <div class="bar-mid"><p class="bar-title">Drill</p><p class="bar-sub" id="drillSub"></p></div>
+    </header>
+    <div class="scroller" id="drillBody"></div>
+  </section>
+
+  <!-- VAULT -->
+  <section class="screen view" id="v-vault" hidden>
+    <header class="bar">
+      <div class="bar-mid"><p class="bar-title">Vault</p><p class="bar-sub">Settings, papers and proofs</p></div>
+    </header>
+    <div class="scroller" id="vaultBody"></div>
+  </section>
+
+  <!-- BUILD (the ceremony) -->
+  <section class="screen" id="v-build" hidden>
+    <header class="bar">
+      <button class="icon" id="buildBack" type="button">Back</button>
+      <div class="bar-mid"><p class="bar-title" id="buildTitle"></p><p class="bar-sub" id="buildStep"></p></div>
+      <span class="icon spacer" aria-hidden="true">Back</span>
+    </header>
+    <div class="progress"><span id="buildBarFill"></span></div>
+    <div class="scroller" id="buildBody"></div>
+    <div class="footbar" id="buildFoot"></div>
+  </section>
+
+  <!-- CARDS -->
+  <section class="screen" id="v-cards" hidden>
+    <header class="bar">
+      <button class="icon" id="cardsBack" type="button">Leave</button>
+      <div class="bar-mid"><p class="bar-title" id="cardsTitle"></p><p class="bar-sub" id="cardsSub"></p></div>
+      <span class="icon spacer" aria-hidden="true">Leave</span>
+    </header>
+    <div class="scroller" id="cardsBody"></div>
+    <div class="footbar" id="cardsFoot"></div>
+  </section>
+
+  <!-- GATHER: drills and rebuilds both come here -->
+  <section class="screen" id="v-gather" hidden>
+    <header class="bar">
+      <button class="icon" id="gatherBack" type="button">Leave</button>
+      <div class="bar-mid"><p class="bar-title" id="gatherTitle"></p><p class="bar-sub" id="gatherSub"></p></div>
+      <span class="icon spacer" aria-hidden="true">Leave</span>
+    </header>
+    <div class="scroller" id="gatherBody"></div>
+    <div class="footbar" id="gatherFoot"></div>
+  </section>
+
+  <!-- ONE GUARDIAN -->
+  <section class="screen" id="v-guardian" hidden>
+    <header class="bar">
+      <button class="icon" id="gdnBack" type="button">Back</button>
+      <div class="bar-mid"><p class="bar-title" id="gdnTitle"></p><p class="bar-sub" id="gdnSub"></p></div>
+      <span class="icon spacer" aria-hidden="true">Back</span>
+    </header>
+    <div class="scroller" id="gdnBody"></div>
+  </section>
+
+  <!-- HEIRS AND THE LETTER -->
+  <section class="screen" id="v-letter" hidden>
+    <header class="bar">
+      <button class="icon" id="letterBack" type="button">Back</button>
+      <div class="bar-mid"><p class="bar-title">Heirs and the letter</p><p class="bar-sub" id="letterSub"></p></div>
+      <span class="icon spacer" aria-hidden="true">Back</span>
+    </header>
+    <div class="scroller" id="letterBody"></div>
+  </section>
+
+  <!-- COMPREHENSION CHECK -->
+  <section class="screen" id="v-quiz" hidden>
+    <header class="bar">
+      <button class="icon" id="quizBack" type="button">Back</button>
+      <div class="bar-mid"><p class="bar-title">Do you understand it</p><p class="bar-sub" id="quizSub"></p></div>
+      <span class="icon spacer" aria-hidden="true">Back</span>
+    </header>
+    <div class="scroller" id="quizBody"></div>
+  </section>
+
+  <!-- THREAT MODEL -->
+  <section class="screen" id="v-threat" hidden>
+    <header class="bar">
+      <button class="icon" id="threatBack" type="button">Back</button>
+      <div class="bar-mid"><p class="bar-title">What this protects</p><p class="bar-sub">And what it does not</p></div>
+      <span class="icon spacer" aria-hidden="true">Back</span>
+    </header>
+    <div class="scroller" id="threatBody"></div>
+  </section>
+
+</main>
+
+<nav id="tabs" hidden>
+  <button data-view="plan" class="tab is-on" type="button">Plan</button>
+  <button data-view="circle" class="tab" type="button">Circle</button>
+  <button data-view="drill" class="tab" type="button">Drill</button>
+  <button data-view="vault" class="tab" type="button">Vault</button>
+</nav>
+
+<!-- a confirm that has to be read -->
+<div id="sheet" class="sheet" hidden>
+  <div class="sheet-panel">
+    <p class="sheet-title" id="sheetTitle"></p>
+    <p class="sheet-body" id="sheetBody"></p>
+    <div class="btnrow">
+      <button class="btn" id="sheetGo" type="button">Continue</button>
+      <button class="btn ghost" id="sheetNo" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<p id="toast" class="toast" hidden></p>
+
+<script src="js/sha256.js"></script>
+<script src="js/bip39.js"></script>
+<script src="js/shamir.js"></script>
+<script src="js/content.js"></script>
+<script src="js/store.js"></script>
+<script src="js/circle.js"></script>
+<script src="js/words.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

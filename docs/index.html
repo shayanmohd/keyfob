@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyfob. Split the phrase, rehearse the day.</title>
+<meta name="description" content="Turn one recovery phrase into guardian cards using Shamir secret sharing, write down the plan, and rehearse it. Offline, and never a wallet.">
+<meta property="og:title" content="Keyfob. Split the phrase, rehearse the day.">
+<meta property="og:description" content="A recovery phrase on one piece of paper has two ways to end badly. This is for both.">
+<link rel="icon" href="shots/icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root {
+    --bg: #F5F3ED; --card: #FFFEF9; --fg: #16211B; --soft: #3D4C44; --faint: #5F6C64;
+    --hair: #D2CEC1; --brass: #7A5713; --brass-line: #9A7526; --on-brass: #FFFEF9;
+    --sans: "Public Sans", system-ui, -apple-system, sans-serif;
+    --serif: "Spectral", Iowan Old Style, Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12160F; --card: #191E17; --fg: #E9E7DA; --soft: #B6B7A8; --faint: #8B8C7E;
+            --hair: #2C302A; --brass: #D8B25F; --brass-line: #B8934A; --on-brass: #12160F; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
+         font-size: 18px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  a { color: var(--brass); }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; }
+
+  .cta { display: inline-block; background: var(--brass); color: var(--on-brass); text-decoration: none;
+         padding: 14px 26px; border-radius: 6px; font-size: 16px; border: 1px solid var(--brass);
+         transition: transform .15s ease; }
+  .cta:active { transform: translateY(1px); }
+
+  nav { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+  .mark { display: flex; align-items: center; gap: 12px; font-family: var(--serif); font-size: 19px; }
+  .mark i { display: block; width: 20px; height: 20px; border: 3px solid var(--brass); border-radius: 50%; }
+  nav a { color: var(--soft); text-decoration: none; font-size: 15px; margin-left: 22px; }
+  nav a:hover { color: var(--fg); }
+
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; padding: 26px 0 90px; }
+  .hero h1 { font-size: clamp(36px, 4.8vw, 56px); line-height: 1.1; margin: 0 0 20px; }
+  .hero p { font-size: 19px; color: var(--soft); margin: 0 0 30px; max-width: 34ch; }
+  .shot { width: 100%; height: auto; border-radius: 6px; border: 1px solid var(--hair); display: block; }
+  .hero .shot { max-width: 330px; margin-left: auto; }
+
+  .notwallet { border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+               padding: 84px 0; text-align: center; }
+  .notwallet p.big { font-family: var(--serif); font-size: clamp(26px, 3.4vw, 36px); line-height: 1.3;
+    margin: 0 auto 20px; max-width: 22ch; }
+  .notwallet p.after { color: var(--soft); max-width: 48ch; margin: 0 auto; }
+
+  .maths { padding: 88px 0; display: grid; grid-template-columns: .95fr 1.05fr; gap: 56px; align-items: center; }
+  .maths h2 { font-size: clamp(26px, 3vw, 34px); margin: 0 0 18px; max-width: 18ch; }
+  .maths p { color: var(--soft); margin: 0 0 14px; }
+
+  .plan { padding: 0 0 88px; }
+  .plan h2 { font-size: clamp(26px, 3vw, 34px); margin: 0 0 34px; }
+  .rows { display: grid; grid-template-columns: 13rem 1fr; gap: 26px; }
+  .rows > div { padding: 20px 0; border-top: 1px solid var(--hair); }
+  .rows > div:nth-last-child(-n+2) { border-bottom: 1px solid var(--hair); }
+  .rows .k { font-family: var(--serif); font-size: 18px; }
+  .rows p { margin: 0; color: var(--soft); }
+
+  .gallery { padding: 0 0 70px; }
+  .gallery h2 { font-size: clamp(26px, 3vw, 34px); margin: 0 0 38px; }
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .strip figure { margin: 0; }
+  .strip figcaption { color: var(--soft); font-size: 15px; margin-top: 14px; }
+
+  .close { text-align: center; padding: 60px 0 110px; border-top: 1px solid var(--hair); }
+  .close p { font-family: var(--serif); font-size: 23px; max-width: 26ch; margin: 0 auto 28px; }
+
+  footer { border-top: 1px solid var(--hair); padding: 32px 0 60px; color: var(--faint); font-size: 15px; }
+  footer .r { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  footer a { color: var(--soft); text-decoration: none; margin-right: 18px; }
+
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none } }
+
+  @media (max-width: 860px) {
+    .hero, .maths { grid-template-columns: 1fr; gap: 34px; }
+    .hero .shot, .maths .shot { max-width: 320px; margin: 0 auto; }
+    .rows { grid-template-columns: 1fr; gap: 6px; }
+    .rows > div { padding: 16px 0 8px; }
+    .strip { grid-template-columns: 1fr; max-width: 330px; margin: 0 auto; gap: 40px; }
+    nav a { margin-left: 14px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <nav>
+    <span class="mark"><i></i> Keyfob</span>
+    <span>
+      <a href="#maths">How it works</a>
+      <a href="privacy-policy.html">Privacy</a>
+      <a href="play/">Try it</a>
+    </span>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>Split the phrase. Rehearse the day.</h1>
+      <p>A recovery phrase on one piece of paper has two ways to end badly: the paper is lost, or you
+        are, and nobody left knows what it was for. Keyfob is for both.</p>
+      <a class="cta" href="https://play.google.com/store/apps/details?id=com.mohdshayan.keyfob">Get it on Google Play</a>
+    </div>
+    <img class="shot reveal" src="shots/01-circle.png" width="1080" height="1920"
+         alt="The circle of guardians, showing how many cards exist and how many are needed.">
+  </header>
+</div>
+
+<section class="notwallet">
+  <div class="wrap">
+    <p class="big">It is not a wallet.</p>
+    <p class="after">It never sees an address, a balance or a transaction, and it cannot move anything.
+      It cannot even reach the network to try: the app declares no internet permission, which you can
+      check on the Play listing before you install it.</p>
+  </div>
+</section>
+
+<section class="maths wrap" id="maths">
+  <img class="shot reveal" src="shots/03-card.png" width="1080" height="1920"
+       alt="A guardian card written out in BIP-39 words with its number, threshold and checksum.">
+  <div>
+    <h2>Any two cards tell an attacker nothing</h2>
+    <p>Your phrase is a number. Keyfob picks a random curve through that number and hands each guardian
+      one point on it. Below the threshold, every possible phrase stays exactly as likely as it was
+      before, which is a stronger promise than encryption can make. Reach the threshold and the curve,
+      and the phrase, come back.</p>
+    <p>This is Shamir secret sharing over the field of 256 elements, the same arithmetic behind SLIP-39
+      hardware wallet backups. Cards are written in the same 2048 BIP-39 words a recovery phrase uses, so
+      a guardian is copying out one familiar kind of thing, and a checksum catches a mistyped or swapped
+      word before anything is built on it.</p>
+  </div>
+</section>
+
+<section class="plan wrap">
+  <h2>The plan, written down</h2>
+  <div class="rows">
+    <div class="k">Who holds what</div>
+    <div><p>Which guardian has which card, where it lives, and how to reach them. Three of five is the
+      usual answer, and the app will argue with you if you pick something fragile.</p></div>
+    <div class="k">A letter</div>
+    <div><p>Written once, kept with the plan, for the person who has to do this without you. It is the
+      part everybody means to write and nobody does.</p></div>
+    <div class="k">A rehearsal</div>
+    <div><p>A drill that walks you through gathering cards and rebuilding a phrase with test data. A
+      recovery plan nobody has ever practised is a wish.</p></div>
+    <div class="k">A threat model</div>
+    <div><p>In plain words: what this defends against, and what it does not. Followed by a short quiz,
+      because understanding it is the point.</p></div>
+  </div>
+</section>
+
+<section class="gallery wrap">
+  <h2>What it looks like</h2>
+  <div class="strip">
+    <figure class="reveal">
+      <img class="shot" src="shots/02-plan.png" width="1080" height="1920" alt="The plan screen listing guardians and where each card lives.">
+      <figcaption>The plan: who holds which card, and what to do first.</figcaption>
+    </figure>
+    <figure class="reveal">
+      <img class="shot" src="shots/04-gather.png" width="1080" height="1920" alt="Gathering cards to rebuild a phrase.">
+      <figcaption>Gathering. Type the cards back in and the phrase returns, checksum first.</figcaption>
+    </figure>
+    <figure class="reveal">
+      <img class="shot" src="shots/05-drill.png" width="1080" height="1920" alt="The rehearsal drill running with test data.">
+      <figcaption>The drill, run with test data, so the real day is not the first attempt.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="close wrap">
+  <p>Your phrase is never stored. It exists while the cards are built, and then it is gone.</p>
+  <a class="cta" href="https://play.google.com/store/apps/details?id=com.mohdshayan.keyfob">Get it on Google Play</a>
+</section>
+
+<footer>
+  <div class="wrap r">
+    <span>
+      <a href="privacy-policy.html">Privacy policy</a>
+      <a href="play/">Try it in the browser</a>
+      <a href="https://github.com/shayanmohd/keyfob">Source</a>
+    </span>
+    <span>SocialSure Private Limited</span>
+  </div>
+</footer>
+
+<script>
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) }
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
