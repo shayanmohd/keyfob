@@ -34,6 +34,19 @@ const Store = (function () {
 
   let db = load();
 
+  /* A plan the app cannot draw is worse than no plan: it used to throw on the first
+     render and leave a blank screen with no way back. Anything that is not a whole
+     plan is held aside rather than handed to the screens, and the record itself is
+     never rewritten, so a future version can still read it. */
+  function usablePlan(p) {
+    if (!p || typeof p !== 'object') return null;
+    if (typeof p.m !== 'number' || typeof p.n !== 'number') return null;
+    if (!Array.isArray(p.guardians) || p.guardians.length !== p.n) return null;
+    if (p.m < 2 || p.m > p.n) return null;
+    for (const g of p.guardians) if (!g || typeof g !== 'object' || !g.id) return null;
+    return p;
+  }
+
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
@@ -42,7 +55,8 @@ const Store = (function () {
       return {
         v: 1,
         onboarded: !!d.onboarded,
-        plan: d.plan || null,
+        plan: usablePlan(d.plan),
+        planBroken: !!(d.plan && !usablePlan(d.plan)),
         owner: typeof d.owner === 'string' ? d.owner : '',
         heirs: Array.isArray(d.heirs) ? d.heirs : [],
         letter: typeof d.letter === 'string' ? d.letter : '',
@@ -54,7 +68,13 @@ const Store = (function () {
     } catch (e) { return clone(DEFAULTS); }
   }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {} }
+  function save() {
+    try {
+      const out = clone(db);
+      delete out.planBroken;
+      localStorage.setItem(KEY, JSON.stringify(out));
+    } catch (e) {}
+  }
 
   /* ---------- dates ---------- */
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
@@ -87,6 +107,7 @@ const Store = (function () {
   /* ---------- the plan ---------- */
   const plan = () => db.plan;
   const hasPlan = () => !!db.plan;
+  const planBroken = () => !!db.planBroken;
 
   function savePlan(p) { db.plan = p; if (!db.onboarded) db.onboarded = true; save(); }
 
@@ -170,7 +191,9 @@ const Store = (function () {
   /* ---------- export and erase ---------- */
   /** The whole record, which by construction contains no phrase and no card. */
   function exportJson() {
-    return JSON.stringify({ app: 'keyfob', format: 1, exported: new Date().toISOString(), data: db }, null, 2);
+    const out = clone(db);
+    delete out.planBroken;
+    return JSON.stringify({ app: 'keyfob', format: 1, exported: new Date().toISOString(), data: out }, null, 2);
   }
   function erase() { db = clone(DEFAULTS); try { localStorage.removeItem(KEY); } catch (e) {} }
 
@@ -180,6 +203,6 @@ const Store = (function () {
            owner: owner, heirs: heirs, addHeir: addHeir, removeHeir: removeHeir,
            letter: letter, letterAt: letterAt,
            addDrill: addDrill, drills: drills, lastDrill: lastDrill,
-           quiz: quiz, settings: settings, onboarded: onboarded,
+           quiz: quiz, settings: settings, onboarded: onboarded, planBroken: planBroken,
            exportJson: exportJson, erase: erase };
 })();

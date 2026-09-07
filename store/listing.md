@@ -39,10 +39,17 @@ or swapped word is caught before anything is built on it. Print them, write them
 
 THE PLAN, WRITTEN DOWN
 Who holds which card, where it lives, and what the person who has to do this without you should do first.
-A letter you write once, kept with the plan. A rehearsal drill that walks you through gathering the cards
-and rebuilding the phrase with test data, because a recovery plan nobody has ever practised is a wish.
-A short quiz that checks you actually understood what you just set up, and a threat model in plain words
-about what this defends against and what it does not.
+A letter you write once, kept with the plan. A rehearsal drill: ring the people holding the cards, type
+them back in, and watch the app rebuild the phrase and check it against its fingerprint without ever
+showing it. A recovery plan nobody has practised is a wish. There is also a short quiz that checks you
+understood what you just set up, and a threat model in plain words about what this defends against and
+what it does not.
+
+WHAT IT LOOKS LIKE
+One drawing carries the whole app: a key, broken cleanly into as many shards as you have cards. A shard
+is solid when its holder has confirmed the card, hatched when nobody has checked lately, and drifted out
+of line when it is gone. During a drill the shards light up one by one as the cards come in, and when the
+threshold is reached the key is whole again for a moment.
 
 YOUR PHRASE IS NEVER STORED
 It is held in memory only while the cards are being built and is gone the moment you leave that screen.
@@ -67,8 +74,8 @@ Privacy policy: https://shayanmohd.github.io/keyfob/privacy-policy.html
 - Target audience: 18 and over.
 - Content rating: no violence, sexuality, profanity, controlled substances, gambling, user-to-user
   communication or location sharing. No cryptocurrency is bought, sold, held or transferred.
-- AI-generated assets: none. The icon and feature graphic are drawn procedurally from store/brand.json;
-  the screenshots are captures of the running app.
+- AI-generated assets: none. The icon and the feature graphic are hand-written SVG and HTML in store/,
+  rendered by a headless browser; the screenshots are captures of the running app.
 - Note for review: this app is adjacent to the crypto wallet category and deliberately outside it. If a
   reviewer needs the distinction, the whole of `web/js/shamir.js` and `web/js/bip39.js` is the app's
   cryptography, and there is no networking code anywhere in the build.

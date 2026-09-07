@@ -1,7 +1,9 @@
 /* Keyfob. The custody circle: your phrase at the centre, the cards around it.
 
-   Drawn as SVG so it stays sharp at any size and takes its colours from the
-   stylesheet, which is what keeps one drawing working in both themes. */
+   The centre is the key whole, which is the thing that exists nowhere; around it
+   sit the people holding a shard of it. Drawn as SVG so it stays sharp at any
+   size and takes its colours from the stylesheet, which is what keeps one
+   drawing working in both themes. */
 const Circle = (function () {
   'use strict';
 
@@ -11,6 +13,7 @@ const Circle = (function () {
   const R_NODE = 23;
   const R_CORE = 34;
 
+  let seq = 0;
   const pt = (angle, r) => [C + r * Math.cos(angle), C + r * Math.sin(angle)];
   const f = n => Math.round(n * 100) / 100;
 
@@ -29,8 +32,14 @@ const Circle = (function () {
     const gs = plan.guardians;
     const n = gs.length;
     const parts = [];
+    const uid = 'ci' + (++seq);
     parts.push('<svg viewBox="0 0 ' + SIZE + ' ' + SIZE + '" class="circle" role="img" ' +
       'aria-label="' + esc(plan.m + ' of ' + n + ' custody circle') + '">');
+    parts.push('<defs><linearGradient id="cuNode" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" class="cu-fill-0"/><stop offset="1" class="cu-fill-1"/></linearGradient>' +
+      '<filter id="' + uid + 'sh" filterUnits="userSpaceOnUse" x="0" y="0" width="' + SIZE + '" height="' + SIZE + '">' +
+      '<feDropShadow dx="0" dy="3" stdDeviation="3.5" flood-color="#3a1c08" flood-opacity="0.34"/></filter>' +
+      '</defs>');
 
     // the ring the cards sit on
     parts.push('<circle class="ring-line" cx="' + C + '" cy="' + C + '" r="' + R_RING + '"/>');
@@ -56,9 +65,12 @@ const Circle = (function () {
       }
     }
 
-    // the core: your phrase
+    // the core: your phrase, drawn as the key whole, because that is what it is
     parts.push('<circle class="core" cx="' + C + '" cy="' + C + '" r="' + R_CORE + '"/>');
-    parts.push('<rect class="core-mark" x="' + (C - 9) + '" y="' + (C - 9) + '" width="18" height="18" rx="4"/>');
+    parts.push('<g class="core-key" transform="translate(' + C + ' ' + C + ')">' +
+      '<circle cx="-13" cy="0" r="5.6" fill="none" stroke-width="4.8"/>' +
+      '<path d="M-8 -3.4 H17 a2 2 0 0 1 2 2 v2.8 a2 2 0 0 1 -2 2 h-1.6 v3.6 h-2.8 V3.4 ' +
+      'h-4.2 v3.6 h-2.8 V3.4 H-8 Z"/></g>');
 
     // the cards
     for (let i = 0; i < n; i++) {
@@ -66,10 +78,11 @@ const Circle = (function () {
       const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
       const [x, y] = pt(a, R_RING);
       const st = stateOf(g);
-      parts.push('<g class="node n-' + st + '"' +
+      parts.push('<g class="node g-in n-' + st + '" style="animation-delay:' + (60 + i * 55) + 'ms"' +
         (opts.interactive ? ' data-guardian="' + esc(g.id) + '" tabindex="0" role="button" aria-label="' +
           esc(g.name + ', card ' + g.cardNo) + '"' : '') + '>');
-      parts.push('<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + R_NODE + '"/>');
+      parts.push('<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + R_NODE + '"' +
+        (st === 'ok' ? ' filter="url(#' + uid + 'sh)"' : '') + '/>');
       parts.push('<text x="' + f(x) + '" y="' + f(y + 5.5) + '">' + esc(initials(g.name)) + '</text>');
       if (st === 'lost') {
         parts.push('<line class="strike" x1="' + f(x - 15) + '" y1="' + f(y + 15) +

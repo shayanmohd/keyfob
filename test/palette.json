@@ -1,0 +1,28 @@
+{
+  "dark": {
+    "bg": "#14171B",
+    "bg2": "#1B1F25",
+    "bg3": "#242932",
+    "fg": "#ECE9E4",
+    "fgSoft": "#B3B9C1",
+    "fgFaint": "#8D949D",
+    "hair": "#2E343D",
+    "copper": "#E28B57",
+    "onCopper": "#1A1207",
+    "alert": "#EE8A76",
+    "washA": 0.14
+  },
+  "light": {
+    "bg": "#F5F3EF",
+    "bg2": "#EDEAE4",
+    "bg3": "#E1DDD5",
+    "fg": "#1A1D22",
+    "fgSoft": "#454B53",
+    "fgFaint": "#595F68",
+    "hair": "#D2CDC4",
+    "copper": "#9C4A1E",
+    "onCopper": "#FFF6EF",
+    "alert": "#8E2E1F",
+    "washA": 0.12
+  }
+}

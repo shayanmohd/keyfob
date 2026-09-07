@@ -1,0 +1,169 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Keyfob</title>
+<style>
+  @font-face {
+    font-family: "Display";
+    src: url("display.ttf") format("truetype");
+    font-weight: 400 700;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+  body {
+    background: #14171B;
+    font-family: "Display", Georgia, serif;
+    color: #ECE9E4;
+    position: relative;
+  }
+  .world {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(52% 86% at 25% 48%, rgba(255, 164, 105, 0.34), rgba(196, 101, 47, 0) 62%),
+      linear-gradient(118deg, #3D454F 0%, #232930 44%, #0C0F13 100%);
+  }
+  .brush {
+    position: absolute; inset: 0; opacity: 0.055;
+    background: repeating-linear-gradient(-11deg,
+      rgba(255, 255, 255, 0.9) 0 1px, rgba(255, 255, 255, 0) 1px 24px);
+  }
+  .vign {
+    position: absolute; inset: 0;
+    background: radial-gradient(76% 120% at 50% 50%, rgba(0,0,0,0) 52%, rgba(0,0,0,0.42) 100%);
+  }
+  .chip { position: absolute; border-radius: 50%; background: #FFC08C; }
+  .wrap {
+    position: absolute; inset: 0; display: grid;
+    grid-template-columns: 468px 1fr; align-items: center;
+  }
+  .mark { display: flex; align-items: center; justify-content: center; }
+  .mark svg { width: 452px; height: 306px; }
+  .say { padding: 0 56px 0 4px; }
+  .name {
+    font-size: 108px; font-weight: 700; letter-spacing: -0.035em; line-height: 0.98;
+    color: #F6EFE7;
+  }
+  .rule { width: 74px; height: 4px; background: #E4874C; border-radius: 2px; margin: 0 0 26px; }
+  .line {
+    margin-top: 24px; font-size: 31px; line-height: 1.34; letter-spacing: -0.014em;
+    color: #E7C3A6; max-width: 500px;
+  }
+  .line b { color: #F6EFE7; font-weight: 700; }
+</style>
+<div class="world"></div>
+<div class="brush"></div>
+<div class="vign"></div>
+<div class="chip" style="left:610px;top:120px;width:9px;height:9px;opacity:.85"></div>
+<div class="chip" style="left:652px;top:84px;width:5px;height:5px;opacity:.6"></div>
+<div class="chip" style="left:206px;top:404px;width:7px;height:7px;opacity:.7"></div>
+<div class="chip" style="left:160px;top:440px;width:4px;height:4px;opacity:.45"></div>
+<div class="chip" style="left:474px;top:56px;width:4px;height:4px;opacity:.4"></div>
+
+<div class="wrap">
+  <div class="mark">
+    <!-- the launcher mark, drawn at size: one key snapped into three shards -->
+    <svg viewBox="20 31 68 46" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="copper" x1="0.1" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stop-color="#FFDDB8"/>
+          <stop offset="0.26" stop-color="#F49A5C"/>
+          <stop offset="0.66" stop-color="#CA6229"/>
+          <stop offset="1" stop-color="#8E3C12"/>
+        </linearGradient>
+        <linearGradient id="cutface" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0" stop-color="#8C4419"/>
+          <stop offset="1" stop-color="#381805"/>
+        </linearGradient>
+        <linearGradient id="brushedg" x1="0" y1="0" x2="0.2" y2="1">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+          <stop offset="0.46" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset="1" stop-color="#000000" stop-opacity="0.24"/>
+        </linearGradient>
+        <mask id="keymask" maskUnits="userSpaceOnUse" x="-60" y="-46" width="120" height="92">
+          <rect x="-60" y="-46" width="120" height="92" fill="#000"/>
+          <g fill="#fff">
+            <circle cx="-22.5" cy="0" r="8.8"/>
+            <rect x="-16" y="-3.4" width="47" height="6.8" rx="3.4"/>
+            <rect x="18.6" y="-1" width="3.9" height="15" rx="1.35"/>
+            <rect x="25.6" y="-1" width="3.9" height="12.2" rx="1.35"/>
+          </g>
+          <circle cx="-22.5" cy="0" r="3.6" fill="#000"/>
+        </mask>
+        <mask id="rimmask" maskUnits="userSpaceOnUse" x="-60" y="-46" width="120" height="92">
+          <rect x="-60" y="-46" width="120" height="92" fill="#000"/>
+          <g fill="#fff">
+            <circle cx="-22.5" cy="0" r="8.8"/>
+            <rect x="-16" y="-3.4" width="47" height="6.8" rx="3.4"/>
+            <rect x="18.6" y="-1" width="3.9" height="15" rx="1.35"/>
+            <rect x="25.6" y="-1" width="3.9" height="12.2" rx="1.35"/>
+          </g>
+          <circle cx="-22.5" cy="0" r="3.6" fill="#000"/>
+          <g fill="#000" transform="translate(0.85 1.25)">
+            <circle cx="-22.5" cy="0" r="8.8"/>
+            <rect x="-16" y="-3.4" width="47" height="6.8" rx="3.4"/>
+            <rect x="18.6" y="-1" width="3.9" height="15" rx="1.35"/>
+            <rect x="25.6" y="-1" width="3.9" height="12.2" rx="1.35"/>
+          </g>
+        </mask>
+        <clipPath id="slA" clipPathUnits="userSpaceOnUse">
+          <polygon points="-60,-40 -14.5,-40 -8.1,40 -60,40"/>
+        </clipPath>
+        <clipPath id="slB" clipPathUnits="userSpaceOnUse">
+          <polygon points="-9.9,-40 2.5,-40 8.9,40 -3.5,40"/>
+        </clipPath>
+        <clipPath id="slC" clipPathUnits="userSpaceOnUse">
+          <polygon points="7.1,-40 60,-40 60,40 13.5,40"/>
+        </clipPath>
+        <filter id="drop" filterUnits="userSpaceOnUse" x="0" y="0" width="108" height="108">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="1.9"/>
+          <feOffset dy="2.6" result="o"/>
+          <feFlood flood-color="#05070A" flood-opacity="0.72"/>
+          <feComposite in2="o" operator="in"/>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="emberblur" filterUnits="userSpaceOnUse" x="0" y="0" width="108" height="108">
+          <feGaussianBlur stdDeviation="3.6"/>
+        </filter>
+        <g id="shardA" clip-path="url(#slA)">
+          <g mask="url(#keymask)" transform="translate(0.9 1.5)"><rect x="-60" y="-46" width="120" height="92" fill="url(#cutface)"/></g>
+          <g mask="url(#keymask)">
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#copper)"/>
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#brushedg)"/>
+          </g>
+          <g mask="url(#rimmask)"><rect x="-60" y="-46" width="120" height="92" fill="#FFE7CC" opacity="0.9"/></g>
+        </g>
+        <g id="shardB" clip-path="url(#slB)">
+          <g mask="url(#keymask)" transform="translate(0.9 1.5)"><rect x="-60" y="-46" width="120" height="92" fill="url(#cutface)"/></g>
+          <g mask="url(#keymask)">
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#copper)"/>
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#brushedg)"/>
+          </g>
+          <g mask="url(#rimmask)"><rect x="-60" y="-46" width="120" height="92" fill="#FFE7CC" opacity="0.9"/></g>
+        </g>
+        <g id="shardC" clip-path="url(#slC)">
+          <g mask="url(#keymask)" transform="translate(0.9 1.5)"><rect x="-60" y="-46" width="120" height="92" fill="url(#cutface)"/></g>
+          <g mask="url(#keymask)">
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#copper)"/>
+            <rect x="-60" y="-46" width="120" height="92" fill="url(#brushedg)"/>
+          </g>
+          <g mask="url(#rimmask)"><rect x="-60" y="-46" width="120" height="92" fill="#FFE7CC" opacity="0.9"/></g>
+        </g>
+      </defs>
+      <g opacity="0.5" filter="url(#emberblur)">
+        <ellipse cx="45.7" cy="54.7" rx="5.2" ry="8.8" fill="#F0812F"/>
+        <ellipse cx="61.3" cy="53.4" rx="5.2" ry="8.8" fill="#F0812F"/>
+      </g>
+      <g filter="url(#drop)">
+        <g transform="translate(54 54) rotate(-5) scale(0.92)">
+          <use href="#shardA"/>
+          <g transform="translate(0.4 2.4) rotate(2.2 0 0)"><use href="#shardB"/></g>
+          <g transform="translate(1.4 -2.4) rotate(-2.2 21 0)"><use href="#shardC"/></g>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div class="say">
+    <div class="rule"></div>
+    <div class="name">Keyfob</div>
+    <p class="line">One phrase, split into cards.<br><b>Any three rebuild it.<br>Two rebuild nothing.</b></p>
+  </div>
+</div>

@@ -1,9 +1,9 @@
 First release.
 
-Turn one recovery phrase into a set of guardian cards, spread across people and places. Choose how many
-cards exist and how many are needed to rebuild it. Fewer than the threshold reveal nothing at all.
+Turn one recovery phrase into a set of guardian cards, spread across people and places. You choose how
+many cards exist and how many are needed to rebuild it. Fewer than the threshold reveal nothing at all.
 
-Cards are written in BIP-39 words with their own checksum. The plan, the letter and a rehearsal drill are
-kept with them, because a recovery plan nobody has practised is a wish.
+Cards are written in BIP-39 words with their own checksum. The plan, the letter to your heirs and a
+rehearsal drill sit alongside them, because a plan nobody has practised is a wish.
 
 Not a wallet. No address, no balance, no internet permission.

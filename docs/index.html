@@ -3,38 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Keyfob. Split the phrase, rehearse the day.</title>
+<title>Keyfob. One phrase, split into cards.</title>
 <meta name="description" content="Turn one recovery phrase into guardian cards using Shamir secret sharing, write down the plan, and rehearse it. Offline, and never a wallet.">
-<meta property="og:title" content="Keyfob. Split the phrase, rehearse the day.">
+<meta property="og:title" content="Keyfob. One phrase, split into cards.">
 <meta property="og:description" content="A recovery phrase on one piece of paper has two ways to end badly. This is for both.">
 <link rel="icon" href="shots/icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
   :root {
-    --bg: #F5F3ED; --card: #FFFEF9; --fg: #16211B; --soft: #3D4C44; --faint: #5F6C64;
-    --hair: #D2CEC1; --brass: #7A5713; --brass-line: #9A7526; --on-brass: #FFFEF9;
+    --bg: #F5F3EF; --card: #EDEAE4; --fg: #1A1D22; --soft: #454B53; --faint: #636A73;
+    --hair: #D2CDC4; --cu: #9C4A1E; --cu-line: #A9552A; --on-cu: #FFF6EF;
     --sans: "Public Sans", system-ui, -apple-system, sans-serif;
     --serif: "Spectral", Iowan Old Style, Georgia, serif;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #12160F; --card: #191E17; --fg: #E9E7DA; --soft: #B6B7A8; --faint: #8B8C7E;
-            --hair: #2C302A; --brass: #D8B25F; --brass-line: #B8934A; --on-brass: #12160F; }
+    :root { --bg: #14171B; --card: #1B1F25; --fg: #ECE9E4; --soft: #B3B9C1; --faint: #8D949D;
+            --hair: #2E343D; --cu: #E28B57; --cu-line: #CE7A46; --on-cu: #1A1207; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans);
          font-size: 18px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
-  a { color: var(--brass); }
+  a { color: var(--cu); }
   h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.01em; }
 
-  .cta { display: inline-block; background: var(--brass); color: var(--on-brass); text-decoration: none;
-         padding: 14px 26px; border-radius: 6px; font-size: 16px; border: 1px solid var(--brass);
-         transition: transform .15s ease; }
+  .cta { display: inline-block; background: var(--cu); color: var(--on-cu); text-decoration: none;
+         padding: 14px 26px; border-radius: 5px; font-size: 16px; font-weight: 600;
+         border: 1px solid var(--cu-line); transition: transform .15s ease; }
   .cta:active { transform: translateY(1px); }
 
   nav { display: flex; align-items: center; justify-content: space-between; height: 76px; }
   .mark { display: flex; align-items: center; gap: 12px; font-family: var(--serif); font-size: 19px; }
-  .mark i { display: block; width: 20px; height: 20px; border: 3px solid var(--brass); border-radius: 50%; }
+  .mark svg { display: block; width: 46px; height: auto; }
+  .mark svg .k { fill: var(--cu); }
   nav a { color: var(--soft); text-decoration: none; font-size: 15px; margin-left: 22px; }
   nav a:hover { color: var(--fg); }
 
@@ -93,7 +94,14 @@
 
 <div class="wrap">
   <nav>
-    <span class="mark"><i></i> Keyfob</span>
+    <span class="mark">
+      <svg viewBox="0 0 310 104" aria-hidden="true">
+        <g class="k">
+          <path d="M4 55a44 44 0 0 1 88 0 44 44 0 0 1-88 0Zm44-17.5a17.5 17.5 0 1 0 0 35 17.5 17.5 0 0 0 0-35Z"/>
+          <rect x="112" y="40" width="46" height="30" rx="4"/>
+          <path d="M178 40h109a15 15 0 0 1 15 15 15 15 0 0 1-15 15h-9v28a5.6 5.6 0 0 1-5.6 5.6h-4.8A5.6 5.6 0 0 1 262 98V70h-14v28a5.6 5.6 0 0 1-5.6 5.6h-4.8A5.6 5.6 0 0 1 232 98V70h-54Z"/>
+        </g>
+      </svg> Keyfob</span>
     <span>
       <a href="#maths">How it works</a>
       <a href="privacy-policy.html">Privacy</a>
@@ -103,13 +111,13 @@
 
   <header class="hero">
     <div>
-      <h1>Split the phrase. Rehearse the day.</h1>
+      <h1>One phrase, split into cards.</h1>
       <p>A recovery phrase on one piece of paper has two ways to end badly: the paper is lost, or you
         are, and nobody left knows what it was for. Keyfob is for both.</p>
       <a class="cta" href="https://play.google.com/store/apps/details?id=com.mohdshayan.keyfob">Get it on Google Play</a>
     </div>
     <img class="shot reveal" src="shots/01-circle.png" width="1080" height="1920"
-         alt="The circle of guardians, showing how many cards exist and how many are needed.">
+         alt="The circle: the phrase at the centre, one card in each pair of hands around it.">
   </header>
 </div>
 
@@ -148,8 +156,8 @@
     <div><p>Written once, kept with the plan, for the person who has to do this without you. It is the
       part everybody means to write and nobody does.</p></div>
     <div class="k">A rehearsal</div>
-    <div><p>A drill that walks you through gathering cards and rebuilding a phrase with test data. A
-      recovery plan nobody has ever practised is a wish.</p></div>
+    <div><p>A drill: ring the people holding the cards, type them back in, and time it. The phrase is
+      checked against its fingerprint and never shown. A recovery plan nobody has practised is a wish.</p></div>
     <div class="k">A threat model</div>
     <div><p>In plain words: what this defends against, and what it does not. Followed by a short quiz,
       because understanding it is the point.</p></div>
@@ -160,16 +168,16 @@
   <h2>What it looks like</h2>
   <div class="strip">
     <figure class="reveal">
-      <img class="shot" src="shots/02-plan.png" width="1080" height="1920" alt="The plan screen listing guardians and where each card lives.">
-      <figcaption>The plan: who holds which card, and what to do first.</figcaption>
+      <img class="shot" src="shots/02-plan.png" width="1080" height="1920" alt="The plan screen: a key drawn in five shards, one per card, above the standing of each.">
+      <figcaption>The plan. One shard per card, and the state of each one at a glance.</figcaption>
     </figure>
     <figure class="reveal">
-      <img class="shot" src="shots/04-gather.png" width="1080" height="1920" alt="Gathering cards to rebuild a phrase.">
-      <figcaption>Gathering. Type the cards back in and the phrase returns, checksum first.</figcaption>
+      <img class="shot" src="shots/04-gather.png" width="1080" height="1920" alt="Gathering cards during a drill, with one shard of the key lit for the card entered.">
+      <figcaption>Gathering. Each card lights its own shard, and the app names the holder.</figcaption>
     </figure>
     <figure class="reveal">
-      <img class="shot" src="shots/05-drill.png" width="1080" height="1920" alt="The rehearsal drill running with test data.">
-      <figcaption>The drill, run with test data, so the real day is not the first attempt.</figcaption>
+      <img class="shot" src="shots/05-drill.png" width="1080" height="1920" alt="A passed drill, with the key drawn whole again and the time it took.">
+      <figcaption>The drill passed. The key is whole for a moment, then the phrase is gone again.</figcaption>
     </figure>
   </div>
 </section>

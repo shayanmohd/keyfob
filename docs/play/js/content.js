@@ -6,7 +6,7 @@ const Content = (function () {
   'use strict';
 
   const INTRO = [
-    { mark: 'ring',
+    { mark: 'whole',
       line: 'Your recovery phrase has one copy, and it is on paper.',
       sub: 'One fire, one flood, one house move, one careless afternoon, and it is gone. ' +
            'Most people who lose crypto lose it exactly this way, and they lose it quietly, ' +
@@ -15,7 +15,7 @@ const Content = (function () {
       line: 'Keyfob cuts it into pieces that mean nothing alone.',
       sub: 'Five cards, any three of which rebuild the phrase. Two of them together are ' +
            'worthless. Not hard to crack: worthless. That is arithmetic, not a promise.' },
-    { mark: 'hands',
+    { mark: 'held',
       line: 'Then you hand them to people, and rehearse.',
       sub: 'Your brother, a safe deposit box, a friend in another city. Once a year you run ' +
            'a drill and find out whether the plan still works while it still does not matter.' }

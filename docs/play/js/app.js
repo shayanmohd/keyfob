@@ -30,6 +30,7 @@ const App = (function () {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
   }
+  function hideToast() { clearTimeout(toastTimer); $('#toast').hidden = true; }
 
   function haptic(kind) {
     if (!Store.settings().haptics || !N) return;
@@ -74,7 +75,7 @@ const App = (function () {
   /* ---------------- routing ---------------- */
 
   function show(id) {
-    $$('.screen').forEach(s => { s.hidden = true; });
+    $$('.screen').forEach(s => { s.hidden = true; s.classList.remove('enter'); });
     const el = document.getElementById(id === 'onboard' ? 'onboard' : 'v-' + id);
     if (el) el.hidden = false;
     view = id;
@@ -87,6 +88,13 @@ const App = (function () {
     }
     const sc = el && el.querySelector('.scroller');
     if (sc) sc.scrollTop = 0;
+    // a toast belongs to the screen that raised it
+    hideToast();
+    // a footbar sits where the toast wants to be
+    const foot = el && el.querySelector('.footbar');
+    document.documentElement.style.setProperty('--toast-lift',
+      (onTab ? 66 : (foot && !foot.hidden) ? 62 : 8) + 'px');
+    if (el) { void el.offsetWidth; el.classList.add('enter'); }
   }
 
   function go(id) {
@@ -99,43 +107,22 @@ const App = (function () {
 
   /* ---------------- onboarding ---------------- */
 
+  /* The three slides are the mark in three states: whole, broken, handed out.
+     Everything else in the app is drawn from the same key. */
   const OB_ART = {
-    ring: '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-      '<rect x="38" y="38" width="24" height="24" rx="5" fill="var(--brass-line)"/></svg>',
-    split: '<svg viewBox="0 0 100 100" aria-hidden="true">' + ringSquares(34, 6.5) + '</svg>',
-    hands: '<svg viewBox="0 0 100 100" aria-hidden="true">' +
-      '<circle cx="50" cy="50" r="34" fill="none" stroke="var(--hair)" stroke-width="1"/>' +
-      spokes(34) +
-      '<circle cx="50" cy="50" r="15" fill="var(--fg)"/>' +
-      '<rect x="44" y="44" width="12" height="12" rx="3" fill="var(--brass)"/>' +
-      ringSquares(34, 6.5) + '</svg>'
+    whole: () => KeyMark.svg({ intact: true, label: 'one key, whole' }),
+    split: () => KeyMark.svg({ n: 5, states: ['ok', 'ok', 'ok', 'ok', 'ok'],
+                               label: 'the key in five shards' }),
+    held: () => KeyMark.svg({ n: 5, numbers: true,
+                              states: ['ok', 'unsure', 'ok', 'ok', 'unsure'],
+                              label: 'five shards, in five pairs of hands' })
   };
-  function ringSquares(r, half) {
-    let out = '';
-    for (let i = 0; i < 5; i++) {
-      const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
-      const x = 50 + r * Math.cos(a), y = 50 + r * Math.sin(a);
-      out += '<rect x="' + (x - half).toFixed(1) + '" y="' + (y - half).toFixed(1) + '" width="' +
-        (half * 2) + '" height="' + (half * 2) + '" rx="2.5" fill="var(--brass-line)"/>';
-    }
-    return out;
-  }
-  function spokes(r) {
-    let out = '';
-    for (let i = 0; i < 5; i++) {
-      const a = -Math.PI / 2 + i * 2 * Math.PI / 5;
-      out += '<line x1="' + (50 + 17 * Math.cos(a)).toFixed(1) + '" y1="' + (50 + 17 * Math.sin(a)).toFixed(1) +
-        '" x2="' + (50 + (r - 9) * Math.cos(a)).toFixed(1) + '" y2="' + (50 + (r - 9) * Math.sin(a)).toFixed(1) +
-        '" stroke="var(--brass-line)" stroke-width="1.4"/>';
-    }
-    return out;
-  }
 
   let obIndex = 0;
   function onboard() {
     const track = $('#obTrack');
     track.innerHTML = Content.INTRO.map(c =>
-      '<article class="ob-card"><div class="ob-art">' + OB_ART[c.mark] + '</div>' +
+      '<article class="ob-card"><div class="ob-art mark-wrap">' + OB_ART[c.mark]() + '</div>' +
       '<p class="ob-line">' + esc(c.line) + '</p><p class="ob-sub">' + esc(c.sub) + '</p></article>').join('');
     $('#obDots').innerHTML = Content.INTRO.map((c, i) => '<i class="' + (i ? '' : 'on') + '"></i>').join('');
     obIndex = 0;
@@ -160,12 +147,19 @@ const App = (function () {
     if (!p) {
       $('#planSub').textContent = 'Nothing protected yet';
       body.innerHTML =
+        '<div class="mark-wrap tall">' + KeyMark.svg({ intact: true, label: 'one key, whole' }) +
+        '<p class="mark-cap">One key. One copy.</p></div>' +
         '<p class="h1">One phrase, one piece of paper, one bad afternoon.</p>' +
         '<p class="lead">Keyfob splits a recovery phrase you already hold into cards that mean ' +
         'nothing on their own, and writes down a plan somebody else could follow.</p>' +
-        '<div class="panel"><p class="body">You will need about fifteen minutes, your recovery ' +
-        'phrase, and a pen. Nothing you type leaves this phone. Nothing can: the app has no ' +
-        'internet permission at all.</p></div>' +
+        (Store.planBroken()
+          ? panel('alert', 'warn', 'There is a plan on this phone that will not open',
+              'The record is there and untouched, and this app cannot read it. Export the record ' +
+              'from the vault before you build anything new. The cards already in circulation are ' +
+              'unaffected: they never depended on this app.')
+          : panel('', 'clock', '', 'You will need about fifteen minutes, your recovery phrase, and ' +
+              'a pen. Nothing you type leaves this phone. Nothing can: the app has no internet ' +
+              'permission at all.')) +
         '<div class="btnrow stack"><button class="btn" id="planStart" type="button">Build the plan</button>' +
         '<button class="btn ghost" id="planThreat" type="button">Read what this protects first</button></div>';
       $('#planStart').addEventListener('click', () => startBuild('new'));
@@ -177,14 +171,18 @@ const App = (function () {
     $('#planSub').textContent = p.m + ' of ' + p.n + ' · issued ' + Store.shortDate(p.rotated);
 
     const bits = [];
-    bits.push('<div class="circle-wrap small">' + Circle.svg(p, { heirs: Store.heirs() }) + '</div>');
+    bits.push('<div class="mark-wrap">' +
+      KeyMark.svg({ n: p.n, states: KeyMark.statesOf(p), numbers: true,
+                    label: 'your key in ' + p.n + ' shards' }) +
+      '<p class="mark-cap">' + esc(cap(Content.word(h.reachable))) + ' reachable, ' +
+      esc(Content.word(Math.max(0, h.spare))) + ' to spare</p></div>');
     bits.push('<p class="lead" style="text-align:center">' +
       esc(Content.shapeLines(p.m, p.n)[0]) + '<br><span class="fp">phrase ' + esc(fpDisplay(p.fp)) + '</span></p>');
 
     if (p.practice) {
-      bits.push('<div class="panel"><p class="body"><strong>This plan protects a practice phrase.</strong> ' +
-        'Keyfob generated it here, on this phone, so you could rehearse. Never put money behind it. ' +
-        'When you are ready, issue a new set from your real phrase.</p></div>');
+      bits.push(panel('', 'warn', 'This plan protects a practice phrase',
+        'Keyfob generated it here, on this phone, so you could rehearse. Never put money behind ' +
+        'it. When you are ready, issue a new set from your real phrase.'));
     }
 
     // what needs doing, as plain sentences
@@ -219,14 +217,17 @@ const App = (function () {
 
     if (todo.length) {
       bits.push('<p class="label">Needs you</p>');
-      todo.forEach(t => bits.push('<div class="panel ' + t[0] + '"><p class="body">' + esc(t[1]) + '</p></div>'));
+      todo.forEach(t => bits.push('<div class="panel ' + (t[0] === 'alert' ? 'alert' : '') + '">' +
+        '<div class="panel-h">' + Icons.svg(t[0] === 'alert' ? 'warn' : 'hand') +
+        '<p class="body" style="margin:0">' + esc(t[1]) + '</p></div></div>'));
     } else {
-      bits.push('<div class="panel brass"><p class="body">Everything is in order. ' +
+      bits.push('<div class="panel brass"><div class="panel-h">' + Icons.svg('check2') +
+        '<p class="body" style="margin:0">Everything is in order. ' +
         cap(Content.word(h.reachable)) + ' cards out, ' + Content.word(h.spare) + ' to spare, last drill ' +
-        esc(Store.ago(Store.lastDrill().at)) + '.</p></div>');
+        esc(Store.ago(Store.lastDrill().at)) + '.</p></div></div>');
     }
 
-    bits.push('<p class="label">Standing</p><div class="rows">');
+    bits.push('<p class="label">Standing</p><div class="rows stagger">');
     bits.push(rowStatic('Cards handed over', (p.n - h.undelivered) + ' of ' + p.n,
       h.lost ? Content.word(h.lost) + ' since marked lost' : ''));
     bits.push(rowStatic('Room for loss', h.spare < 0 ? 'none, the plan is short' :
@@ -242,7 +243,7 @@ const App = (function () {
 
     const ds = Store.drills().slice(0, 4);
     if (ds.length) {
-      bits.push('<p class="label">Recently</p><div class="rows">');
+      bits.push('<p class="label">Recently</p><div class="rows stagger">');
       ds.forEach(d => bits.push(rowStatic(drillSentence(d), Store.shortDate(d.at), '')));
       bits.push('</div>');
     }
@@ -261,7 +262,13 @@ const App = (function () {
     return '<button class="row" id="' + id + '" type="button"><div class="row-mid">' +
       '<p class="row-k">' + esc(k) + '</p>' + (sub ? '<p class="row-v">' + esc(sub) + '</p>' : '') +
       '</div>' + (end ? '<span class="row-end">' + esc(end) + '</span>' : '') +
-      '<span class="row-chev" aria-hidden="true">&rsaquo;</span></button>';
+      '<span class="row-chev">' + Icons.svg('chevron') + '</span></button>';
+  }
+  /** A panel with an icon against its heading, used where a panel is making a point. */
+  function panel(kind, icon, title, body) {
+    return '<div class="panel' + (kind ? ' ' + kind : '') + '">' +
+      (title ? '<div class="panel-h">' + Icons.svg(icon) + '<p class="h3">' + esc(title) + '</p></div>' : '') +
+      '<p class="body">' + body + '</p></div>';
   }
   const fpDisplay = fp => String(fp || '').toUpperCase().replace(/(.{4})(.{4})/, '$1 $2');
   const cap = s => String(s).charAt(0).toUpperCase() + String(s).slice(1);
@@ -273,9 +280,9 @@ const App = (function () {
   }
   function fmtSecs(s) {
     s = Math.max(1, Math.round(s));
-    if (s < 60) return s + ' seconds';
-    const m = Math.floor(s / 60);
-    return m + (m === 1 ? ' minute ' : ' minutes ') + (s % 60) + 's';
+    if (s < 60) return s + (s === 1 ? ' second' : ' seconds');
+    const m = Math.floor(s / 60), r = s % 60;
+    return m + (m === 1 ? ' minute' : ' minutes') + (r ? ' ' + r + 's' : '');
   }
 
   /* ---------------- circle ---------------- */
@@ -285,9 +292,12 @@ const App = (function () {
     const body = $('#circleBody');
     if (!p) {
       $('#circleSub').textContent = 'Nothing to draw yet';
-      body.innerHTML = '<p class="empty">Build a plan and the circle appears here: your phrase at ' +
-        'the centre, one card in each pair of hands around it.</p>' +
-        '<button class="btn" id="circStart" type="button">Build the plan</button>';
+      body.innerHTML = '<div class="empty-state">' +
+        KeyMark.svg({ intact: true, label: 'one key, whole' }) +
+        '<p class="empty-h">Nothing is split yet.</p>' +
+        '<p class="empty-p">Build a plan and the circle appears here: your phrase at the centre, ' +
+        'one card in each pair of hands around it.</p>' +
+        '<button class="btn" id="circStart" type="button">Build the plan</button></div>';
       $('#circStart').addEventListener('click', () => startBuild('new'));
       return;
     }
@@ -302,7 +312,7 @@ const App = (function () {
     bits.push('<p class="help" style="text-align:center">The centre is your phrase. Nothing on this ' +
       'phone connects to it: the lines are the cards, and the cards are on paper.</p>');
 
-    bits.push('<p class="label">The cards</p><div class="rows">');
+    bits.push('<p class="label">The cards</p><div class="rows stagger">');
     p.guardians.forEach(g => {
       const st = Circle.stateOf(g);
       const sub = (g.note ? g.note + ' · ' : '') +
@@ -363,6 +373,11 @@ const App = (function () {
     $('#gdnSub').textContent = 'Card ' + g.cardNo + ' of ' + p.n + ' · ' + g.cardId;
     const st = Circle.stateOf(g);
     const bits = [];
+    bits.push('<div class="mark-wrap"><div style="max-width:180px;margin:0 auto">' +
+      KeyMark.svg({ n: p.n, states: p.guardians.map((x, i) =>
+          x.id === g.id ? (st === 'lost' ? 'lost' : 'ok') : 'faint'),
+        label: 'the shard this card holds' }) + '</div>' +
+      '<p class="mark-cap">Shard ' + g.cardNo + ' of ' + p.n + '</p></div>');
     bits.push('<div class="panel"><p class="body">' +
       (st === 'lost'
         ? 'This card counts as gone. ' + (Store.health().broken
@@ -375,15 +390,19 @@ const App = (function () {
             'not exist anywhere any more, because Keyfob did not keep it.') + '</p></div>');
 
     bits.push('<div class="field"><label for="gdnName">Name</label>' +
-      '<input type="text" id="gdnName" value="' + esc(g.name) + '"></div>');
+      '<input type="text" id="gdnName" value="' + esc(g.name) + '">' +
+      '<p class="err" id="gdnErr" hidden></p></div>');
     bits.push('<div class="field"><label for="gdnNote">Where it lives</label>' +
       '<input type="text" id="gdnNote" value="' + esc(g.note || '') + '" placeholder="the safe at her office"></div>');
 
     bits.push('<p class="label">Standing</p>');
-    bits.push('<div class="btnrow stack">' +
-      '<button class="btn ' + (st === 'ok' ? '' : 'ghost') + '" id="gdnOk" type="button">They have it, confirmed today</button>' +
-      '<button class="btn ' + (st === 'unsure' ? '' : 'ghost') + '" id="gdnUnsure" type="button">Not sure any more</button>' +
-      '<button class="btn ' + (st === 'lost' ? 'danger' : 'ghost') + '" id="gdnLost" type="button">Lost, or out of reach</button></div>');
+    bits.push('<div class="btnrow stack" role="group" aria-label="Where this card stands">' +
+      '<button class="btn ' + (st === 'ok' ? '' : 'ghost') + '" id="gdnOk" type="button" aria-pressed="' +
+      (st === 'ok') + '">They have it, confirmed today</button>' +
+      '<button class="btn ' + (st === 'unsure' ? '' : 'ghost') + '" id="gdnUnsure" type="button" aria-pressed="' +
+      (st === 'unsure') + '">Not sure any more</button>' +
+      '<button class="btn ' + (st === 'lost' ? 'danger' : 'ghost') + '" id="gdnLost" type="button" aria-pressed="' +
+      (st === 'lost') + '">Lost, or out of reach</button></div>');
     bits.push('<p class="help">Confirming means you asked them and they looked. Guessing is how plans rot.</p>');
 
     bits.push('<hr class="rule"><p class="label">If this card is gone</p>');
@@ -395,7 +414,17 @@ const App = (function () {
     $('#gdnBody').innerHTML = bits.join('');
     $('#gdnName').addEventListener('change', e => {
       const v = e.target.value.trim();
-      if (v) { Store.setGuardian(gdnId, { name: v }); $('#gdnTitle').textContent = v; }
+      const err = $('#gdnErr');
+      if (!v) {
+        err.innerHTML = Icons.svg('warn') + '<span>A card has to be held by a name somebody can ' +
+          'read out. Kept as ' + esc(g.name) + '.</span>';
+        err.hidden = false;
+        e.target.value = g.name;
+        return;
+      }
+      err.hidden = true;
+      Store.setGuardian(gdnId, { name: v });
+      $('#gdnTitle').textContent = v;
     });
     $('#gdnNote').addEventListener('change', e => Store.setGuardian(gdnId, { note: e.target.value.trim() }));
     $('#gdnOk').addEventListener('click', () => {
@@ -418,9 +447,12 @@ const App = (function () {
     const body = $('#drillBody');
     if (!p) {
       $('#drillSub').textContent = 'Nothing to rehearse yet';
-      body.innerHTML = '<p class="empty">A drill is a rehearsal of the day this matters. There is ' +
-        'nothing to rehearse until you have a plan.</p>' +
-        '<button class="btn" id="drillStart" type="button">Build the plan</button>';
+      body.innerHTML = '<div class="empty-state">' +
+        KeyMark.svg({ intact: true, label: 'one key, whole' }) +
+        '<p class="empty-h">Nothing to rehearse yet.</p>' +
+        '<p class="empty-p">A drill is a rehearsal of the day this matters. There is nothing to ' +
+        'rehearse until you have a plan.</p>' +
+        '<button class="btn" id="drillStart" type="button">Build the plan</button></div>';
       $('#drillStart').addEventListener('click', () => startBuild('new'));
       return;
     }
@@ -434,12 +466,14 @@ const App = (function () {
       'phrase, checks it against the fingerprint, and then forgets it again. The phrase is never ' +
       'shown during a drill.</p>');
 
-    bits.push('<div class="panel"><p class="h3">You lost your phone</p>' +
+    bits.push('<div class="panel"><div class="panel-h">' + Icons.svg('hand') +
+      '<p class="h3">You lost your phone</p></div>' +
       '<p class="body">You are alive and doing this yourself. Ring round, gather ' + Content.word(p.m) +
       ' cards, and see how long it actually takes.</p>' +
       '<button class="btn wide" id="drillSelf" type="button">Run the recovery drill</button></div>');
 
-    bits.push('<div class="panel"><p class="h3">You are not here</p>' +
+    bits.push('<div class="panel"><div class="panel-h">' + Icons.svg('person') +
+      '<p class="h3">You are not here</p></div>' +
       '<p class="body">Stand in for your heirs. Read only the estate document, do not help from ' +
       'memory, and find out whether the instructions you left are enough. This is the drill families ' +
       'remember.</p>' +
@@ -448,9 +482,9 @@ const App = (function () {
     const ds = Store.drills();
     bits.push('<p class="label">Drill log</p>');
     if (!ds.length) {
-      bits.push('<p class="empty">Nothing here yet.</p>');
+      bits.push('<p class="empty">Nothing here yet. The first drill is the one that finds things.</p>');
     } else {
-      bits.push('<div class="rows">');
+      bits.push('<div class="rows stagger">');
       ds.forEach(d => bits.push(rowStatic(drillSentence(d), Store.shortDate(d.at), '')));
       bits.push('</div>');
       bits.push('<p class="help">Times get faster and then slower again, as people move and forget. ' +
@@ -469,7 +503,7 @@ const App = (function () {
     const q = Store.quiz();
     const bits = [];
 
-    bits.push('<p class="label">Understanding</p><div class="rows">');
+    bits.push('<p class="label">Understanding</p><div class="rows stagger">');
     bits.push(rowButton('vQuiz', 'The comprehension check',
       q.passed ? 'Passed ' + Store.ago(q.at) : 'Five questions. Wrong answers get a gentler explanation.',
       q.passed ? 'passed' : ''));
@@ -477,7 +511,7 @@ const App = (function () {
     bits.push(rowButton('vFormat', 'Check the arithmetic', 'Run the sharing maths here and now', ''));
     bits.push('</div>');
 
-    bits.push('<p class="label">Papers</p><div class="rows">');
+    bits.push('<p class="label">Papers</p><div class="rows stagger">');
     bits.push(rowButton('vLetter', 'Heirs and the letter',
       Store.letter() ? 'Updated ' + Store.ago(Store.letterAt()) : 'Not written yet', ''));
     bits.push(rowButton('vEstate', 'The estate document',
@@ -485,26 +519,26 @@ const App = (function () {
     bits.push('</div>');
 
     if (p) {
-      bits.push('<p class="label">The phrase</p><div class="rows">');
+      bits.push('<p class="label">The phrase</p><div class="rows stagger">');
       bits.push(rowButton('vRebuild', 'Rebuild the phrase',
         'Gather ' + Content.word(p.m) + ' cards and read the phrase back', ''));
       bits.push(rowButton('vRotate', 'Issue a new set of cards', 'Retires every card now in circulation', ''));
       bits.push('</div>');
     }
 
-    bits.push('<p class="label">Settings</p><div class="rows">');
+    bits.push('<p class="label">Settings</p><div class="rows stagger">');
     bits.push(rowButton('vHaptic', 'Haptics', 'A short pulse when a ceremony completes', s.haptics ? 'on' : 'off'));
     bits.push(rowButton('vConceal', 'Open cards covered', 'Words stay hidden until you ask for them',
       s.conceal ? 'on' : 'off'));
     bits.push('</div>');
 
-    bits.push('<p class="label">This device</p><div class="rows">');
+    bits.push('<p class="label">This device</p><div class="rows stagger">');
     bits.push(rowButton('vExport', 'Export the record', 'Names, dates and fingerprints, as JSON', ''));
     bits.push(rowButton('vErase', 'Erase everything', 'Cards already handed out keep working', ''));
     bits.push('</div>');
 
-    bits.push('<p class="colophon">Keyfob. Backup and inheritance for a recovery phrase you already hold.<br>' +
-      'No account, no network, no purchase, no wallet. Version 1.0</p>');
+    bits.push('<p class="colophon">Keyfob. Backup and inheritance for a recovery phrase you ' +
+      'already hold.<br>No account, no network, no purchase, no wallet.</p>');
 
     $('#vaultBody').innerHTML = bits.join('');
 
@@ -543,9 +577,14 @@ const App = (function () {
   }
 
   function runSelfTest() {
-    toast('Running');
+    const row = $('#vFormat');
+    const mid = row && row.querySelector('.row-mid');
+    if (mid) mid.innerHTML = '<p class="row-k">Check the arithmetic</p>' +
+      '<p class="busy" style="margin:4px 0 0"><i></i>Splitting and rebuilding, on this phone</p>';
+    if (row) row.disabled = true;
     setTimeout(() => {
       const r = Shamir.selfTest(120);
+      renderVault();
       if (r.ok) {
         haptic('good');
         confirmSheet('The arithmetic holds',
@@ -608,6 +647,7 @@ const App = (function () {
     bits.push('<div class="field" style="margin-top:14px"><label for="heirName">Add an heir</label>' +
       '<input type="text" id="heirName" placeholder="Name"></div>' +
       '<div class="field"><input type="text" id="heirRel" placeholder="Daughter, business partner, executor"></div>' +
+      '<p class="err" id="heirErr" hidden></p>' +
       '<button class="btn ghost" id="heirAdd" type="button">Add</button>');
 
     bits.push('<hr class="rule"><p class="label">The letter</p>');
@@ -625,7 +665,17 @@ const App = (function () {
     $('#ownName').addEventListener('change', e => Store.owner(e.target.value.trim()));
     $('#heirAdd').addEventListener('click', () => {
       const n = $('#heirName').value.trim();
-      if (!n) { toast('A name first'); return; }
+      const err = m => {
+        const e = $('#heirErr');
+        e.innerHTML = Icons.svg('warn') + '<span>' + esc(m) + '</span>';
+        e.hidden = false;
+        $('#heirName').focus();
+      };
+      if (!n) { err('A name first. This is who your family calls.'); return; }
+      if (Store.heirs().some(h => h.name.toLowerCase() === n.toLowerCase())) {
+        err(n + ' is already named. Two heirs with one name would read as one person.');
+        return;
+      }
       Store.addHeir(n, $('#heirRel').value.trim());
       haptic('tap'); renderLetter();
     });
@@ -637,7 +687,13 @@ const App = (function () {
     });
     $('#letterDoc').addEventListener('click', () => {
       Store.letter($('#letterText').value);
-      if (!Store.plan()) { toast('Build a plan first'); return; }
+      if (!Store.plan()) {
+        const e = $('#heirErr');
+        e.innerHTML = Icons.svg('warn') + '<span>The document lists who holds which card, so it ' +
+          'needs a plan first.</span>';
+        e.hidden = false;
+        return;
+      }
       shareText('Keyfob estate document', estateDocument());
     });
   }
@@ -740,7 +796,8 @@ const App = (function () {
     const bits = [];
     bits.push('<p class="h1">' + esc(q.q) + '</p>');
     q.a.forEach((opt, i) => {
-      bits.push('<button class="opt" data-i="' + i + '" type="button">' + esc(opt.t) + '</button>');
+      bits.push('<button class="opt" data-i="' + i + '" type="button">' +
+        '<span class="opt-t">' + esc(opt.t) + '</span></button>');
     });
     bits.push('<div id="quizWhy"></div>');
     $('#quizBody').innerHTML = bits.join('');
@@ -753,13 +810,15 @@ const App = (function () {
     quiz.answered = true;
     $$('#quizBody .opt').forEach((b, k) => {
       b.disabled = true;
-      if (q.a[k].ok) b.classList.add('right');
-      else if (k === i) b.classList.add('wrong');
+      if (q.a[k].ok) { b.classList.add('right'); b.insertAdjacentHTML('afterbegin', Icons.svg('tick')); }
+      else if (k === i) { b.classList.add('wrong'); b.insertAdjacentHTML('afterbegin', Icons.svg('cross')); }
     });
     haptic(right ? 'good' : 'bad');
     const why = $('#quizWhy');
-    why.innerHTML = '<div class="panel ' + (right ? 'brass' : 'alert') + '">' +
-      '<p class="body">' + (right ? '' : '<strong>Not quite.</strong> ') + esc(q.why) + '</p></div>' +
+    why.innerHTML = '<div class="panel ' + (right ? 'brass' : 'alert') + '"><div class="panel-h">' +
+      Icons.svg(right ? 'check2' : 'warn') +
+      '<p class="body" style="margin:0">' + (right ? '' : '<strong>Not quite.</strong> ') +
+      esc(q.why) + '</p></div></div>' +
       '<button class="btn wide" id="quizNext" type="button">' +
       (!right ? 'Answer it again' : quiz.i + 1 < quiz.list.length ? 'Next question' : 'Done') + '</button>';
     $('#quizNext').addEventListener('click', () => {
@@ -804,6 +863,8 @@ const App = (function () {
 
   function renderBuild() {
     const b = build;
+    // a step of the ceremony is a screen: the toast the last one raised does not follow it
+    hideToast();
     $('#buildTitle').textContent = b.mode === 'rotate' ? 'New set of cards' : 'Build the plan';
     $('#buildStep').textContent = 'Step ' + (b.step + 1) + ' of ' + BUILD_STEPS.length;
     $('#buildBarFill').style.width = Math.round(((b.step) / (BUILD_STEPS.length - 1)) * 100) + '%';
@@ -860,6 +921,8 @@ const App = (function () {
       '<button class="btn ' + (n === build.wordCount ? '' : 'ghost') + ' small" data-len="' + n + '" type="button">' +
       n + ' words</button>').join('');
     $$('#lenRow [data-len]').forEach(b => b.addEventListener('click', () => {
+      // keep what is already typed: on a 24 word phrase, losing it to a mistap is brutal
+      build.carry = build.grid ? build.grid.words() : null;
       build.wordCount = parseInt(b.dataset.len, 10);
       build.practice = false;
       renderBuild();
@@ -868,7 +931,10 @@ const App = (function () {
     build.grid = WordGrid.create($('#gridHost'), { count: build.wordCount, onChange: checkPhrase });
     if (build.entropy && Bip39.toPhrase(build.entropy).length === build.wordCount) {
       build.grid.setWords(Bip39.toPhrase(build.entropy));
+    } else if (build.carry && build.carry.some(Boolean)) {
+      build.grid.setWords(build.carry.slice(0, build.wordCount));
     }
+    build.carry = null;
     $('#practiceBtn').addEventListener('click', () => {
       const ent = Shamir.randomBytes(build.wordCount === 12 ? 16 : build.wordCount === 15 ? 20 :
         build.wordCount === 18 ? 24 : build.wordCount === 21 ? 28 : 32);
@@ -877,7 +943,7 @@ const App = (function () {
       haptic('tap');
       toast('A practice phrase, made here, just now');
     });
-    $('#clearBtn').addEventListener('click', () => { build.practice = false; build.grid.clear(); });
+    $('#clearBtn').addEventListener('click', () => { build.practice = false; build.carry = null; build.grid.clear(); });
     footButtons(foot, 'Continue', () => { build.step = 2; renderBuild(); },
       'Back', () => { build.step = 0; renderBuild(); }, true);
     checkPhrase(build.grid.words());
@@ -921,6 +987,9 @@ const App = (function () {
       '<p class="h1">How many cards, and how many to rebuild.</p>' +
       '<p class="lead">Three of five is the shape most people should choose. Two spare cards, and no ' +
       'pair of holders can act without you.</p>' +
+      '<div class="mark-wrap">' + KeyMark.svg({ n: b.n, label: b.n + ' shards' }) +
+      '<p class="mark-cap">' + esc(Content.word(b.m)) + ' of ' + esc(Content.word(b.n)) +
+      ' rebuild it</p></div>' +
       '<p class="label">Cards in total</p>' +
       stepperHtml('n', b.n, 3, 8) +
       '<p class="label">Cards needed to rebuild</p>' +
@@ -943,10 +1012,10 @@ const App = (function () {
   }
   function stepperHtml(id, val, min, max) {
     return '<div class="stepper"><button type="button" id="st-' + id + '-down"' +
-      (val <= min ? ' disabled' : '') + ' aria-label="fewer">&minus;</button>' +
+      (val <= min ? ' disabled' : '') + ' aria-label="fewer">' + Icons.svg('minus') + '</button>' +
       '<span class="val" id="st-' + id + '-val">' + val + '</span>' +
       '<button type="button" id="st-' + id + '-up"' + (val >= max ? ' disabled' : '') +
-      ' aria-label="more">+</button></div>';
+      ' aria-label="more">' + Icons.svg('plus') + '</button></div>';
   }
   function wireStepper(id, fn) {
     const cur = () => parseInt($('#st-' + id + '-val').textContent, 10);
@@ -965,7 +1034,8 @@ const App = (function () {
       bits.push('<div class="field"><label for="pn' + i + '">Card ' + (i + 1) + '</label>' +
         '<input type="text" id="pn' + i + '" value="' + esc(p.name) + '" placeholder="Name"></div>' +
         '<div class="field" style="margin-top:-8px"><input type="text" id="pw' + i + '" value="' +
-        esc(p.note) + '" placeholder="Where it will live"></div>');
+        esc(p.note) + '" placeholder="Where it will live"></div>' +
+        '<p class="err" id="pe' + i + '" hidden></p>');
     });
     bits.push('<p class="help">You can rename a holder later. Changing who holds a card means ' +
       'issuing a new set, because Keyfob cannot make a second copy of one card.</p>');
@@ -981,6 +1051,23 @@ const App = (function () {
   function refreshPeople() {
     const go = $('#fGo');
     if (go) go.disabled = !build.people.every(p => p.name.trim());
+    // two cards to one name is legal and almost always a mistake, so it is said
+    // next to the field that caused it rather than at the foot of a long form
+    const seen = {};
+    build.people.forEach((p, i) => {
+      const cell = $('#pe' + i);
+      if (!cell) return;
+      const k = p.name.trim().toLowerCase();
+      if (k && seen[k]) {
+        cell.innerHTML = Icons.svg('warn') + '<span>Card ' + (seen[k]) + ' is already going to ' +
+          esc(p.name.trim()) + '. Your family is told to ring the holders by name, so give each ' +
+          'card a name of its own, such as ' + esc(p.name.trim()) + ' at home.</span>';
+        cell.hidden = false;
+      } else {
+        cell.hidden = true;
+      }
+      if (k && !seen[k]) seen[k] = i + 1;
+    });
   }
 
   function stepCheck(body, foot) {
@@ -1006,13 +1093,16 @@ const App = (function () {
           if (opt.ok) cls += ' right';
           else if (chosen === ai) cls += ' wrong';
         }
+        const mark = chosen === undefined ? '' : opt.ok ? Icons.svg('tick') : (chosen === ai ? Icons.svg('cross') : '');
         bits.push('<button class="' + cls + '" data-q="' + qi + '" data-a="' + ai + '" type="button"' +
-          (chosen !== undefined ? ' disabled' : '') + '>' + esc(opt.t) + '</button>');
+          (chosen !== undefined ? ' disabled' : '') + '>' + mark +
+          '<span class="opt-t">' + esc(opt.t) + '</span></button>');
       });
       if (b.quizAns[qi] !== undefined) {
         const wasRight = !!q.a[b.quizAns[qi]].ok;
-        bits.push('<div class="panel' + (wasRight ? ' brass' : ' alert') + '"><p class="body">' +
-          (wasRight ? '' : '<strong>Not quite.</strong> ') + esc(q.why) + '</p>' +
+        bits.push('<div class="panel' + (wasRight ? ' brass' : ' alert') + '"><div class="panel-h">' +
+          Icons.svg(wasRight ? 'check2' : 'warn') + '<p class="body" style="margin:0">' +
+          (wasRight ? '' : '<strong>Not quite.</strong> ') + esc(q.why) + '</p></div>' +
           (wasRight ? '' : '<button class="btn ghost small" data-retry="' + qi +
             '" type="button" style="margin-top:10px">Answer it again</button>') + '</div>');
       }
@@ -1041,19 +1131,26 @@ const App = (function () {
 
   function issueCards() {
     const b = build;
+    // the second half of a double tap arrives after the ceremony has already ended
+    if (!b || issued) return;
     const ent = b.entropy;
     if (!ent) { toast('The phrase is not complete'); return; }
     const shares = Shamir.split(ent, b.m, b.n);
     const now = Date.now();
+    const old = Store.plan();
+    const fp = Sha256.fingerprint(ent, 4);
+    // A practice plan stays a practice plan when it is rotated: the warning it carries
+    // is the only thing standing between a rehearsal and somebody's savings.
+    const practice = !!b.practice || !!(old && old.practice && old.fp === fp);
     const plan = {
-      created: (Store.plan() && Store.plan().created) || now,
+      created: (old && old.created) || now,
       rotated: now,
       m: b.m, n: b.n,
       wordCount: b.wordCount,
       elen: ent.length,
       cardWords: Shamir.wordCount(ent.length),
-      fp: Sha256.fingerprint(ent, 4),
-      practice: !!b.practice,
+      fp: fp,
+      practice: practice,
       guardians: shares.map((s, i) => ({
         id: 'g' + now.toString(36) + i,
         name: b.people[i].name.trim(),
@@ -1085,22 +1182,28 @@ const App = (function () {
     const bits = [];
 
     if (issued.idx === 0) {
-      bits.push('<div class="panel alert"><p class="body"><strong>These cards exist on this screen ' +
-        'and nowhere else.</strong> Keyfob did not save them and cannot make them again. Write each ' +
-        'one out before you move on.</p></div>');
+      bits.push(panel('alert', 'warn', 'These cards exist on this screen and nowhere else',
+        'Keyfob did not save them and cannot make them again. Write each one out before you move on.'));
     }
 
+    bits.push('<div class="mark-wrap">' +
+      KeyMark.svg({ n: p.n, numbers: true, sheen: false,
+        states: p.guardians.map(x => x.id === c.g.id ? 'ok' : 'faint'),
+        label: 'shard ' + c.g.cardNo + ' of ' + p.n }) +
+      '<p class="mark-cap">Shard ' + c.g.cardNo + ' of ' + p.n + '</p></div>');
     bits.push('<div class="card-sheet">');
-    bits.push('<div class="card-head"><p class="card-name">' + esc(c.g.name) + '</p>' +
+    bits.push('<div class="card-head">' +
+      '<div class="card-head-mid"><p class="card-name">' + esc(c.g.name) + '</p></div>' +
       '<span class="card-no">' + esc(c.g.cardId) + '</span></div>');
     bits.push('<p class="card-meta">Card ' + c.g.cardNo + ' of ' + p.n + '. Any ' + p.m +
       ' cards rebuild the phrase. This one alone rebuilds nothing.</p>');
     if (conceal) {
-      bits.push('<div class="card-hidden"><p>' + p.cardWords + ' words, covered until you ask.</p>' +
+      bits.push('<div class="card-hidden">' + Icons.svg('lock') +
+        '<p>' + p.cardWords + ' words, covered until you ask.</p>' +
         '<button class="btn" id="cardReveal" type="button">Show the words</button></div>');
     } else {
       bits.push('<div class="card-words">' + c.words.map((w, i) =>
-        '<b><i>' + (i + 1) + '</i>' + esc(w) + '</b>').join('') + '</div>');
+        '<b><i>' + (i + 1) + '</i><span>' + esc(w) + '</span></b>').join('') + '</div>');
     }
     bits.push('<p class="card-meta" style="margin:0">' + esc(Content.CARD_NOTE) + '</p>');
     bits.push('</div>');
@@ -1112,7 +1215,7 @@ const App = (function () {
     bits.push('<p class="help">A saved card is a file on your phone, which is a worse hiding place ' +
       'than a drawer. Use it to print, then delete it.</p>');
 
-    bits.push('<p class="label">The rest of the set</p><div class="rows">');
+    bits.push('<p class="label">The rest of the set</p><div class="rows stagger">');
     issued.cards.forEach((cc, i) => bits.push(rowStatic(
       'Card ' + cc.g.cardNo + '. ' + cc.g.name,
       i === issued.idx ? 'on screen' : (cc.g.held ? 'handed over' : 'waiting'), '')));
@@ -1190,6 +1293,7 @@ const App = (function () {
     if (gather && gather.tick) clearInterval(gather.tick);
     gather = null;
   }
+  function clearGatherTick() { if (gather && gather.tick) { clearInterval(gather.tick); gather.tick = 0; } }
   function paintGatherTime() {
     if (!gather || gather.result) return;
     const s = Math.round((Date.now() - gather.started) / 1000);
@@ -1218,13 +1322,20 @@ const App = (function () {
         'day: ring the people holding them. The phrase is never shown in a drill, only checked.</p></div>');
     }
 
+    const held = {};
+    g.entries.forEach(e => { held[e.cardNo] = 1; });
+    bits.push('<div class="mark-wrap">' +
+      KeyMark.svg({ n: p.n, numbers: true,
+        states: p.guardians.map(x => held[x.cardNo] ? 'ok' : 'faint'),
+        label: g.entries.length + ' of ' + g.need + ' shards in hand' }) +
+      '<p class="mark-cap">' + g.entries.length + ' of ' + g.need + ' in hand</p></div>');
     bits.push('<p class="h1">' + (g.entries.length >= g.need
       ? 'Enough cards. Rebuild it.'
       : cap(Content.word(g.need - g.entries.length)) +
         (g.need - g.entries.length === 1 ? ' more card.' : ' more cards.')) + '</p>');
 
     if (g.entries.length) {
-      bits.push('<div class="rows">');
+      bits.push('<div class="rows stagger">');
       g.entries.forEach((e, i) => bits.push(
         '<div class="row"><span class="dot ok">' + esc(String(e.cardNo)) + '</span>' +
         '<div class="row-mid"><p class="row-k">' + esc(e.name) + '</p>' +
@@ -1296,9 +1407,13 @@ const App = (function () {
   }
 
   function addCard() {
+    if (!gather || !gather.grid || gather.result) return;
     const words = gather.grid.words();
     const r = Shamir.fromCard(words);
     if (!r.ok) return;
+    // a second tap must never put the same point in twice: combine would refuse it
+    if (gather.entries.some(e => e.cardNo === r.share.x)) return;
+    if (gather.entries.length >= gather.need) return;
     const known = Store.cardById(r.id);
     gather.entries.push({ cardId: r.id, cardNo: r.share.x, share: r.share, m: r.m,
                           name: known ? known.name : 'Card ' + r.share.x });
@@ -1310,6 +1425,7 @@ const App = (function () {
   function doRebuild() {
     const p = Store.plan();
     const g = gather;
+    if (!g || g.result || g.entries.length < g.need) return;
     const seconds = (Date.now() - g.started) / 1000;
     let entropy = null, err = null;
     try { entropy = Shamir.combine(g.entries.map(e => e.share)); }
@@ -1318,7 +1434,7 @@ const App = (function () {
     g.result = { ok: !!fpOk, err: err, seconds: seconds,
                  phrase: fpOk ? Bip39.toPhrase(entropy) : null,
                  entropy: fpOk ? entropy : null };
-    if (g.tick) clearInterval(g.tick);
+    clearGatherTick();
     if (g.mode !== 'rebuild') {
       Store.addDrill({ kind: g.mode === 'drill-heirs' ? 'heirs' : 'self',
                        gathered: g.entries.length, seconds: seconds, passed: !!fpOk });
@@ -1333,12 +1449,24 @@ const App = (function () {
     $('#gatherSub').textContent = r.ok ? 'Rebuilt in ' + fmtSecs(r.seconds) : 'Did not rebuild';
     const bits = [];
 
+    if (r.ok) {
+      bits.push('<div class="mark-wrap">' +
+        KeyMark.svg({ intact: true, label: 'the key, whole again' }) +
+        '<p class="mark-cap">Whole again, for a moment</p></div>');
+    }
+
     if (!r.ok) {
-      bits.push('<div class="panel alert"><p class="h3">That did not rebuild your phrase.</p>' +
+      bits.push('<div class="panel alert"><div class="panel-h">' + Icons.svg('warn') +
+        '<p class="h3">That did not rebuild your phrase.</p></div>' +
         '<p class="body">' + esc(r.err ||
           'The cards decoded cleanly and produced a phrase, but not the one this plan was built ' +
           'around. That means at least one card belongs to a different set, most likely an older ' +
           'one that a rotation retired.') + '</p></div>');
+      bits.push('<div class="mark-wrap">' +
+        KeyMark.svg({ n: p.n, numbers: true, sheen: false,
+          states: p.guardians.map(x => g.entries.some(e => e.cardNo === x.cardNo) ? 'lost' : 'faint'),
+          label: 'the cards brought did not fit together' }) +
+        '<p class="mark-cap">These did not fit together</p></div>');
       bits.push('<p class="body">Nothing is broken yet. Check the label printed on each card against ' +
         'the circle, and try again with cards from the current set.</p>');
       bits.push('<div class="rows">');
@@ -1346,11 +1474,16 @@ const App = (function () {
         Store.cardById(e.cardId) ? 'in the current set' : 'not in the current set')));
       bits.push('</div>');
     } else if (g.mode === 'rebuild') {
-      bits.push('<div class="panel brass"><p class="h3">Your phrase, rebuilt on this phone.</p>' +
+      bits.push('<div class="panel brass"><div class="panel-h">' + Icons.svg('check2') +
+        '<p class="h3">Your phrase, rebuilt on this phone.</p></div>' +
         '<p class="body">It was not sent anywhere and it is not being saved. Leaving this screen ' +
-        'drops it.</p></div>');
-      bits.push('<div class="card-sheet"><div class="card-words">' + r.phrase.map((w, i) =>
-        '<b><i>' + (i + 1) + '</i>' + esc(w) + '</b>').join('') + '</div>' +
+        'drops it, and so does putting the app in the background.</p></div>');
+      bits.push('<div class="card-sheet">' + (r.covered
+        ? '<div class="card-hidden">' + Icons.svg('lock') +
+          '<p>Covered while the app was in the background.</p>' +
+          '<button class="btn" id="rShow" type="button">Show the phrase again</button></div>'
+        : '<div class="card-words">' + r.phrase.map((w, i) =>
+            '<b><i>' + (i + 1) + '</i><span>' + esc(w) + '</span></b>').join('') + '</div>') +
         '<p class="card-meta" style="margin:0">Fingerprint <span class="fp">' +
         esc(fpDisplay(p.fp)) + '</span>, which matches the plan.</p></div>');
       bits.push('<div class="btnrow stack">' +
@@ -1358,8 +1491,9 @@ const App = (function () {
         '<button class="btn" id="rDone" type="button">Done, clear the screen</button></div>');
     } else {
       const fast = r.seconds < 300;
-      bits.push('<div class="panel brass"><p class="h3">The plan works.</p>' +
-        '<p class="body">' + Content.word(g.entries.length) + ' cards rebuilt a phrase whose ' +
+      bits.push('<div class="panel brass"><div class="panel-h">' + Icons.svg('check2') +
+        '<p class="h3">The plan works.</p></div>' +
+        '<p class="body">' + cap(Content.word(g.entries.length)) + ' cards rebuilt a phrase whose ' +
         'fingerprint matches this plan exactly. The phrase itself was never shown and is already ' +
         'gone.</p></div>');
       bits.push('<div class="rows">');
@@ -1378,6 +1512,8 @@ const App = (function () {
     $('#gatherBody').innerHTML = bits.join('');
     $('#gatherFoot').innerHTML = '';
     $('#gatherFoot').hidden = true;
+    const show2 = $('#rShow');
+    if (show2) show2.addEventListener('click', () => { g.result.covered = false; renderGatherResult(); });
     const done = $('#rDone');
     if (done) done.addEventListener('click', () => {
       const mode = g.mode;
@@ -1420,19 +1556,43 @@ const App = (function () {
     return false;
   }
 
+  /* Nothing secret may sit on screen behind the app switcher, and nothing may keep
+     ticking while the app is not in front of anyone. */
   function onPause() {
-    // A card or a rebuilt phrase must not be sitting on screen behind the app switcher.
-    if (view === 'cards' && issued) issued.revealed = false;
+    // a word grid is either a recovery phrase or a guardian card, and either one is
+    // worth more than the picture the app switcher is about to take of it
+    document.body.classList.add('is-covered');
+    if (view === 'cards' && issued) { issued.revealed = false; renderCards(); }
+    if (gather) {
+      if (gather.tick) { clearInterval(gather.tick); gather.tick = 0; }
+      if (gather.result && gather.result.phrase && !gather.result.covered) {
+        gather.result.covered = true;
+        if (view === 'gather') renderGatherResult();
+      }
+    }
   }
   function onResume() {
+    document.body.classList.remove('is-covered');
     if (view === 'cards' && issued) renderCards();
     if (view === 'plan') renderPlan();
+    // the clock reads from the moment the drill started, so it never lost the time
+    if (view === 'gather' && gather && !gather.result && !gather.tick) {
+      gather.tick = setInterval(paintGatherTime, 1000);
+      paintGatherTime();
+    }
   }
 
   /* ---------------- init ---------------- */
 
   function init() {
-    $$('.tab').forEach(b => b.addEventListener('click', () => { haptic('tap'); go(b.dataset.view); }));
+    $$('.tab').forEach(b => {
+      b.innerHTML = Icons.svg(b.dataset.view) + '<span>' + esc(b.textContent.trim()) + '</span>';
+      b.addEventListener('click', () => { haptic('tap'); go(b.dataset.view); });
+    });
+    // the bar buttons, and the invisible twin that keeps the title centred
+    $$('.bar .icon').forEach(b => {
+      b.innerHTML = Icons.svg('back') + '<span>' + esc(b.textContent.trim()) + '</span>';
+    });
     $('#obNext').addEventListener('click', obNext);
     $('#sheetGo').addEventListener('click', () => { const f = sheetGo; if (f) f(); });
     $('#sheetNo').addEventListener('click', closeSheet);
