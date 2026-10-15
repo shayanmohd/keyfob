@@ -9,3 +9,6 @@ android/app/build/
 android/app/src/main/assets/www/
 node_modules/
 test/shots/
+
+# internal plan: competitor and pricing notes stay private
+BLUEPRINT.md
