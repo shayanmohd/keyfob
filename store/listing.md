@@ -61,7 +61,7 @@ Free and complete. A tool for the day something goes wrong should not have a sub
 ## Contact
 Email: shayanm2002@gmail.com
 Website: https://shayanmohd.github.io/keyfob/
-Privacy policy: https://shayanmohd.github.io/keyfob/privacy-policy.html
+Privacy policy: https://apps.mohdshayan.com/privacy-policies/keyfob-privacy-policy.html
 
 ## Declarations (read off the built manifest and the code)
 - Permissions declared: VIBRATE. No INTERNET.
